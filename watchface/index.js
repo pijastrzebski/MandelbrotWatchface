@@ -33,7 +33,7 @@ const ZOOM_TARGETS = [
   { name: 'Golden Spiral', cr: -0.7492, ci: 0.1102, minSpan: 0.009, maxSpan: 1.30 }
 ]
 
-// Glowing Electric Color Engine matching screenshot_1 aesthetic
+// Glowing Electric Color Engine
 function getMandelbrotColor(iter, zMag, max, paletteIdx, phase) {
   // Solid deep black interior for cardioid & bulbs
   if (iter === max && zMag < 1.0) return 0x000000
@@ -48,7 +48,7 @@ function getMandelbrotColor(iter, zMag, max, paletteIdx, phase) {
   const p = paletteIdx % 5
 
   if (p === 0) {
-    // Electric Cyan & Royal Blue Aura (matches screenshot_1)
+    // Electric Cyan & Royal Blue Aura
     const r = Math.floor(Math.sin(t * 6.28) * 40 + 10)
     const g = Math.floor(Math.sin(t * 6.28 + 1.2) * 125 + 130)
     const b = Math.floor(Math.sin(t * 6.28 + 2.4) * 110 + 145)
@@ -272,7 +272,7 @@ WatchFace({
       console.log('Canvas widget creation fallback:', e)
     }
 
-    // 2. Segmented Bezel Progress Arcs (Matching screenshot_1 segmented multi-color rim)
+    // 2. Segmented Bezel Progress Arcs
     // Left Track (Steps background)
     createWidget(widget.ARC, {
       x: px(10),
@@ -348,7 +348,7 @@ WatchFace({
       line_width: px(7)
     })
 
-    // 3. Date & Day Display (Top - Matching screenshot_1)
+    // 3. Date & Day Display
     this.state.dateWidget = createWidget(widget.TEXT, {
       x: px(40),
       y: px(68),
@@ -362,7 +362,7 @@ WatchFace({
       text: 'MONDAY, AUG 24'
     })
 
-    // 4. Digital Clock (Center - Matching screenshot_1 large bold white time)
+    // 4. Digital Clock
     this.state.timeWidget = createWidget(widget.TEXT, {
       x: px(10),
       y: px(105),
@@ -376,7 +376,7 @@ WatchFace({
       text: '10:48'
     })
 
-    // 5. Metrics Dashboard (3 Columns with subtle vertical separator lines matching screenshot_1)
+    // 5. Metrics Dashboard
 
     // Left Column: STEPS
     createWidget(widget.TEXT, {
@@ -474,7 +474,7 @@ WatchFace({
       text: '100%'
     })
 
-    // 6. Bottom Row: CALORIES (Matching screenshot_1)
+    // 6. Bottom Row: CALORIES
     this.state.calorieWidget = createWidget(widget.TEXT, {
       x: px(40),
       y: px(348),
@@ -575,7 +575,7 @@ WatchFace({
             iter++
           }
 
-          // Continuous gradient color mapping matching screenshot_1
+          // Continuous gradient color mapping
           color = getMandelbrotColor(iter, zx * zx + zy * zy, MAX_ITER, paletteIdx, phase)
         }
 
