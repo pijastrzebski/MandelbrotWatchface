@@ -1,0 +1,22 @@
+{
+  "name": "amazfit-zeppos-watchface",
+  "version": "1.0.0",
+  "description": "A stylish, feature-packed basic watchface for Amazfit smartwatches running Zepp OS",
+  "main": "app.js",
+  "scripts": {
+    "build": "zeus build",
+    "dev": "zeus dev",
+    "preview": "zeus preview"
+  },
+  "keywords": [
+    "amazfit",
+    "zeppos",
+    "watchface",
+    "smartwatch"
+  ],
+  "author": "Pija",
+  "license": "MIT",
+  "devDependencies": {
+    "@zeppos/device-types": "^3.0.0"
+  }
+}
