@@ -1,27 +1,17 @@
 # Mandelbrot Fractal Watchface for Amazfit Zepp OS
 
-<p align="center">
-  <img src="assets/icon.png" width="128" height="128" alt="Mandelbrot Watchface Icon" style="border-radius: 20%;">
-</p>
-
-<p align="center">
-  A sleek, minimalist, feature-packed digital watchface built with <b>Zepp OS</b> (compatible with Zepp OS 2.0, 3.0, 3.5, and 4.0+) featuring real-time procedural Mandelbrot fractal zooming, ultra-bold typography, and a dedicated pure digital Always-On Display (AOD).
-</p>
+A sleek, minimalist, feature-packed digital watchface built with <b>Zepp OS</b> (compatible with Zepp OS 2.0, 3.0, 3.5, and 4.0+) featuring real-time procedural Mandelbrot fractal zooming, ultra-bold typography, and a dedicated pure digital Always-On Display (AOD).
 
 ---
 
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="assets/screenshots/screenshot_1.png" width="280" alt="Active Mode - Electric Cyan">
+  <img src="assets/screenshots/screenshot_1.png" width="280" alt="Screenshot 1">
   &nbsp;&nbsp;
-  <img src="assets/screenshots/screenshot_2.png" width="280" alt="Deep Zoom - Cyber Magenta">
+  <img src="assets/screenshots/screenshot_2.png" width="280" alt="Screenshot 2">
   &nbsp;&nbsp;
-  <img src="assets/screenshots/screenshot_3.png" width="280" alt="Always-On Display - Digital AOD">
-</p>
-
-<p align="center">
-  <b>Active Mode (Electric Cyan)</b> &nbsp;&nbsp;|&nbsp;&nbsp; <b>Deep Zoom (Cyber Magenta)</b> &nbsp;&nbsp;|&nbsp;&nbsp; <b>Always-On Display (AOD)</b>
+  <img src="assets/screenshots/screenshot_3.png" width="280" alt="Screenshot 3">
 </p>
 
 ---
