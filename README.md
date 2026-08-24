@@ -1,6 +1,9 @@
 # Mandelbrot Fractal Watchface for Amazfit Zepp OS
 
-A sleek, minimalist, feature-packed digital watchface built with <b>Zepp OS</b> (compatible with Zepp OS 2.0, 3.0, 3.5, and 4.0+) featuring real-time procedural Mandelbrot fractal zooming, ultra-bold typography, and a dedicated pure digital Always-On Display (AOD).
+[![Build Watchface Package](https://github.com/pijastrzebski/MandelbrotWatchface/actions/workflows/build.yml/badge.svg)](https://github.com/pijastrzebski/MandelbrotWatchface/actions/workflows/build.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+A sleek, minimalist, feature-packed digital watchface built with **Zepp OS** (compatible with Zepp OS 2.0, 3.0, 3.5, and 4.0+) featuring real-time procedural Mandelbrot fractal zooming, ultra-bold typography, and a dedicated pure digital Always-On Display (AOD).
 
 ---
 
@@ -49,6 +52,9 @@ A sleek, minimalist, feature-packed digital watchface built with <b>Zepp OS</b> 
 ## 📁 Project Structure
 
 ```
+├── .github/
+│   └── workflows/
+│       └── build.yml     # Automated GitHub CI build & artifact upload
 ├── app.json              # Zepp OS application configuration (Round platforms only)
 ├── app.js                # Global application lifecycle
 ├── watchface/
