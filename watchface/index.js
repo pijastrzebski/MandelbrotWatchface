@@ -1,8 +1,74 @@
-import { createWidget, widget, align, prop } from '@zos/ui'
+import { createWidget, widget, align, prop, event } from '@zos/ui'
 import { Battery, Step, HeartRate, Calorie, Time } from '@zos/sensor'
+import { launchApp, SYSTEM_APP_HR, SYSTEM_APP_STATUS, SYSTEM_APP_SPORT, SYSTEM_APP_SETTING } from '@zos/router'
 import { createTimer, stopTimer } from '@zos/timer'
 import { getScene, SCENE_AOD } from '@zos/app'
 import { px } from '@zos/utils'
+
+// Helper function to safely launch native system applications / widgets
+function openSystemApp(appId, fallbackAppId = null, url = '') {
+  if (url) {
+    try {
+      if (typeof launchApp === 'function' && typeof appId !== 'undefined') {
+        launchApp({
+          appId: appId,
+          url: url,
+          native: true
+        })
+        return
+      }
+    } catch (e) {
+      console.log('Error launching with url:', e)
+    }
+
+    try {
+      if (typeof hmApp !== 'undefined' && typeof hmApp.startApp === 'function') {
+        hmApp.startApp({
+          url: url,
+          native: true
+        })
+        return
+      }
+    } catch (e) {
+      console.log('Error in hmApp.startApp with url:', e)
+    }
+  }
+
+  try {
+    if (typeof launchApp === 'function' && typeof appId !== 'undefined') {
+      launchApp({
+        appId: appId,
+        native: true
+      })
+      return
+    }
+  } catch (e) {
+    console.log('Error launching system app:', e)
+  }
+
+  if (fallbackAppId && typeof launchApp === 'function') {
+    try {
+      launchApp({
+        appId: fallbackAppId,
+        native: true
+      })
+      return
+    } catch (e) {
+      console.log('Error launching fallback system app:', e)
+    }
+  }
+
+  try {
+    if (typeof hmApp !== 'undefined' && typeof hmApp.startApp === 'function') {
+      hmApp.startApp({
+        native: true,
+        appid: appId
+      })
+    }
+  } catch (e) {
+    console.log('Error in hmApp.startApp fallback:', e)
+  }
+}
 
 // Date format constants
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
@@ -392,7 +458,7 @@ WatchFace({
     // 5. Metrics Dashboard
 
     // Left Column: STEPS
-    createWidget(widget.TEXT, {
+    const stepHeader = createWidget(widget.TEXT, {
       x: px(35),
       y: px(254),
       w: px(120),
@@ -416,6 +482,11 @@ WatchFace({
       align_v: align.CENTER_V,
       text: '0'
     })
+    const onStepClick = () => {
+      openSystemApp(SYSTEM_APP_STATUS)
+    }
+    stepHeader.addEventListener(event.CLICK_DOWN, onStepClick)
+    this.state.stepWidget.addEventListener(event.CLICK_DOWN, onStepClick)
 
     // Vertical Divider 1
     createWidget(widget.FILL_RECT, {
@@ -427,7 +498,7 @@ WatchFace({
     })
 
     // Middle Column: HEART RATE
-    createWidget(widget.TEXT, {
+    const hrHeader = createWidget(widget.TEXT, {
       x: px(170),
       y: px(254),
       w: px(140),
@@ -451,6 +522,11 @@ WatchFace({
       align_v: align.CENTER_V,
       text: '--'
     })
+    const onHrClick = () => {
+      openSystemApp(SYSTEM_APP_HR)
+    }
+    hrHeader.addEventListener(event.CLICK_DOWN, onHrClick)
+    this.state.heartRateWidget.addEventListener(event.CLICK_DOWN, onHrClick)
 
     // Vertical Divider 2
     createWidget(widget.FILL_RECT, {
@@ -462,7 +538,7 @@ WatchFace({
     })
 
     // Right Column: BATTERY / POWER
-    createWidget(widget.TEXT, {
+    const batteryHeader = createWidget(widget.TEXT, {
       x: px(325),
       y: px(254),
       w: px(120),
@@ -486,6 +562,11 @@ WatchFace({
       align_v: align.CENTER_V,
       text: '100%'
     })
+    const onBatteryClick = () => {
+      openSystemApp(typeof SYSTEM_APP_SETTING !== 'undefined' ? SYSTEM_APP_SETTING : 1, null, 'Settings_battery')
+    }
+    batteryHeader.addEventListener(event.CLICK_DOWN, onBatteryClick)
+    this.state.batteryWidget.addEventListener(event.CLICK_DOWN, onBatteryClick)
 
     // 6. Bottom Row: CALORIES
     this.state.calorieWidget = createWidget(widget.TEXT, {
@@ -500,6 +581,10 @@ WatchFace({
       align_v: align.CENTER_V,
       text: '🔥 0 KCAL'
     })
+    const onCalorieClick = () => {
+      openSystemApp(SYSTEM_APP_STATUS)
+    }
+    this.state.calorieWidget.addEventListener(event.CLICK_DOWN, onCalorieClick)
 
     // Initial update of clock and sensor values
     const now = new Date()
