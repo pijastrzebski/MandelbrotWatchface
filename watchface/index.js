@@ -100,6 +100,19 @@ WatchFace({
     calorieSensor: null,
     timeSensor: null,
 
+    // Sensor event listener callbacks
+    batteryCallback: null,
+    stepCallback: null,
+    hrCallback: null,
+    calorieCallback: null,
+
+    // Cached values to avoid redundant widget redraws
+    lastBatteryVal: -1,
+    lastStepVal: -1,
+    lastStepTargetVal: -1,
+    lastHeartRateVal: -1,
+    lastCalorieVal: -1,
+
     // Background Canvas
     bgCanvas: null,
 
@@ -491,10 +504,7 @@ WatchFace({
     // Initial update of clock and sensor values
     const now = new Date()
     this.updateClock(now)
-    this.updateBattery()
-    this.updateSteps()
-    this.updateHeartRate()
-    this.updateCalories()
+    this.updateAllSensors(true)
 
     // Register sensor callbacks
     this.registerSensorListeners()
@@ -618,28 +628,72 @@ WatchFace({
     if (this.state.isAOD) return
 
     if (this.state.batterySensor && typeof this.state.batterySensor.onChange === 'function') {
-      this.state.batterySensor.onChange(() => {
+      this.state.batteryCallback = () => {
         this.updateBattery()
-      })
+      }
+      this.state.batterySensor.onChange(this.state.batteryCallback)
     }
 
     if (this.state.stepSensor && typeof this.state.stepSensor.onChange === 'function') {
-      this.state.stepSensor.onChange(() => {
+      this.state.stepCallback = () => {
         this.updateSteps()
-      })
+      }
+      this.state.stepSensor.onChange(this.state.stepCallback)
     }
 
-    if (this.state.heartRateSensor && typeof this.state.heartRateSensor.onCurrentChange === 'function') {
-      this.state.heartRateSensor.onCurrentChange(() => {
+    if (this.state.heartRateSensor) {
+      this.state.hrCallback = () => {
         this.updateHeartRate()
-      })
+      }
+      if (typeof this.state.heartRateSensor.onCurrentChange === 'function') {
+        this.state.heartRateSensor.onCurrentChange(this.state.hrCallback)
+      }
+      if (typeof this.state.heartRateSensor.onLastChange === 'function') {
+        this.state.heartRateSensor.onLastChange(this.state.hrCallback)
+      }
     }
 
     if (this.state.calorieSensor && typeof this.state.calorieSensor.onChange === 'function') {
-      this.state.calorieSensor.onChange(() => {
+      this.state.calorieCallback = () => {
         this.updateCalories()
-      })
+      }
+      this.state.calorieSensor.onChange(this.state.calorieCallback)
     }
+  },
+
+  unregisterSensorListeners() {
+    try {
+      if (this.state.batterySensor && typeof this.state.batterySensor.offChange === 'function' && this.state.batteryCallback) {
+        this.state.batterySensor.offChange(this.state.batteryCallback)
+        this.state.batteryCallback = null
+      }
+    } catch (e) {}
+
+    try {
+      if (this.state.stepSensor && typeof this.state.stepSensor.offChange === 'function' && this.state.stepCallback) {
+        this.state.stepSensor.offChange(this.state.stepCallback)
+        this.state.stepCallback = null
+      }
+    } catch (e) {}
+
+    try {
+      if (this.state.heartRateSensor && this.state.hrCallback) {
+        if (typeof this.state.heartRateSensor.offCurrentChange === 'function') {
+          this.state.heartRateSensor.offCurrentChange(this.state.hrCallback)
+        }
+        if (typeof this.state.heartRateSensor.offLastChange === 'function') {
+          this.state.heartRateSensor.offLastChange(this.state.hrCallback)
+        }
+        this.state.hrCallback = null
+      }
+    } catch (e) {}
+
+    try {
+      if (this.state.calorieSensor && typeof this.state.calorieSensor.offChange === 'function' && this.state.calorieCallback) {
+        this.state.calorieSensor.offChange(this.state.calorieCallback)
+        this.state.calorieCallback = null
+      }
+    } catch (e) {}
   },
 
   updateClock(currentDate) {
@@ -678,25 +732,44 @@ WatchFace({
     if (this.state.dateWidget) {
       this.state.dateWidget.setProperty(prop.TEXT, `${dayName}, ${monthName} ${dateNum}`)
     }
+
+    // Continuously refresh all sensor values (diff checks ensure 0 redundant widget calls)
+    this.updateAllSensors(false)
   },
 
-  updateBattery() {
+  updateAllSensors(force = false) {
+    this.updateBattery(force)
+    this.updateSteps(force)
+    this.updateHeartRate(force)
+    this.updateCalories(force)
+  },
+
+  updateBattery(force = false) {
     if (!this.state.batterySensor) return
     try {
-      const level = this.state.batterySensor.getCurrent ? this.state.batterySensor.getCurrent() : (this.state.batterySensor.current || 100)
-      if (typeof level === 'number') {
-        if (this.state.batteryWidget) {
-          this.state.batteryWidget.setProperty(prop.TEXT, `${level}%`)
-        }
-        if (this.state.batteryArc) {
-          const angleSpan = (level / 100) * 90
-          const endAngle = -45 + angleSpan
-          const arcColor = level > 50 ? 0x10B981 : level > 20 ? 0xFBBF24 : 0xEF4444
-          this.state.batteryArc.setProperty(prop.MORE, {
-            start_angle: -45,
-            end_angle: Math.min(45, endAngle),
-            color: arcColor
-          })
+      let level = null
+      if (typeof this.state.batterySensor.getCurrent === 'function') {
+        level = this.state.batterySensor.getCurrent()
+      } else if (typeof this.state.batterySensor.current === 'number') {
+        level = this.state.batterySensor.current
+      }
+
+      if (typeof level === 'number' && !isNaN(level)) {
+        if (force || level !== this.state.lastBatteryVal) {
+          this.state.lastBatteryVal = level
+          if (this.state.batteryWidget) {
+            this.state.batteryWidget.setProperty(prop.TEXT, `${level}%`)
+          }
+          if (this.state.batteryArc) {
+            const angleSpan = (Math.max(0, Math.min(100, level)) / 100) * 90
+            const endAngle = -45 + angleSpan
+            const arcColor = level > 50 ? 0x10B981 : level > 20 ? 0xFBBF24 : 0xEF4444
+            this.state.batteryArc.setProperty(prop.MORE, {
+              start_angle: -45,
+              end_angle: Math.min(45, endAngle),
+              color: arcColor
+            })
+          }
         }
       }
     } catch (e) {
@@ -704,19 +777,37 @@ WatchFace({
     }
   },
 
-  updateSteps() {
+  updateSteps(force = false) {
     if (!this.state.stepSensor) return
     try {
-      const current = this.state.stepSensor.getCurrent ? this.state.stepSensor.getCurrent() : (this.state.stepSensor.current || 0)
-      const target = this.state.stepSensor.getTarget ? this.state.stepSensor.getTarget() : (this.state.stepSensor.target || 8000)
-
-      if (this.state.stepWidget) {
-        this.state.stepWidget.setProperty(prop.TEXT, `${formatNumber(current)}`)
+      let current = 0
+      if (typeof this.state.stepSensor.getCurrent === 'function') {
+        current = this.state.stepSensor.getCurrent()
+      } else if (typeof this.state.stepSensor.current === 'number') {
+        current = this.state.stepSensor.current
       }
 
-      if (target > 0) {
-        const pct = Math.min(100, Math.round((current / target) * 100))
-        if (this.state.stepArc) {
+      let target = 8000
+      if (typeof this.state.stepSensor.getTarget === 'function') {
+        target = this.state.stepSensor.getTarget()
+      } else if (typeof this.state.stepSensor.target === 'number') {
+        target = this.state.stepSensor.target
+      }
+
+      const stepChanged = current !== this.state.lastStepVal
+      const targetChanged = target !== this.state.lastStepTargetVal
+
+      if (force || stepChanged) {
+        this.state.lastStepVal = current
+        if (this.state.stepWidget) {
+          this.state.stepWidget.setProperty(prop.TEXT, `${formatNumber(current)}`)
+        }
+      }
+
+      if (force || stepChanged || targetChanged) {
+        this.state.lastStepTargetVal = target
+        if (target > 0 && this.state.stepArc) {
+          const pct = Math.min(100, Math.max(0, (current / target) * 100))
           const angleSpan = (pct / 100) * 90
           const endAngle = 135 + angleSpan
           this.state.stepArc.setProperty(prop.MORE, {
@@ -730,33 +821,67 @@ WatchFace({
     }
   },
 
-  updateHeartRate() {
+  updateHeartRate(force = false) {
     if (!this.state.heartRateSensor || !this.state.heartRateWidget) return
     try {
-      const hr = this.state.heartRateSensor.getCurrent ? this.state.heartRateSensor.getCurrent() : (this.state.heartRateSensor.current || 0)
-      if (typeof hr === 'number' && hr > 0) {
-        this.state.heartRateWidget.setProperty(prop.TEXT, `${hr}`)
-      } else {
-        this.state.heartRateWidget.setProperty(prop.TEXT, '--')
+      let hr = 0
+      if (typeof this.state.heartRateSensor.getCurrent === 'function') {
+        hr = this.state.heartRateSensor.getCurrent()
+      }
+      if ((!hr || hr <= 0) && typeof this.state.heartRateSensor.getLast === 'function') {
+        hr = this.state.heartRateSensor.getLast()
+      }
+      if ((!hr || hr <= 0) && typeof this.state.heartRateSensor.last === 'number') {
+        hr = this.state.heartRateSensor.last
+      }
+      if ((!hr || hr <= 0) && typeof this.state.heartRateSensor.current === 'number') {
+        hr = this.state.heartRateSensor.current
+      }
+
+      const hrVal = typeof hr === 'number' && hr > 0 ? hr : 0
+      if (force || hrVal !== this.state.lastHeartRateVal) {
+        this.state.lastHeartRateVal = hrVal
+        if (hrVal > 0) {
+          this.state.heartRateWidget.setProperty(prop.TEXT, `${hrVal}`)
+        } else {
+          this.state.heartRateWidget.setProperty(prop.TEXT, '--')
+        }
       }
     } catch (e) {
       console.log('Error updating heart rate:', e)
     }
   },
 
-  updateCalories() {
+  updateCalories(force = false) {
     if (!this.state.calorieSensor || !this.state.calorieWidget) return
     try {
-      const cal = this.state.calorieSensor.getCurrent ? this.state.calorieSensor.getCurrent() : (this.state.calorieSensor.current || 0)
-      this.state.calorieWidget.setProperty(prop.TEXT, `🔥 ${formatNumber(cal)} KCAL`)
-      if (this.state.calorieArc) {
-        const pct = Math.min(100, Math.round((cal / 600) * 100))
-        const angleSpan = (pct / 100) * 90
-        const endAngle = 45 + angleSpan
-        this.state.calorieArc.setProperty(prop.MORE, {
-          start_angle: 45,
-          end_angle: Math.min(135, endAngle)
-        })
+      let cal = 0
+      if (typeof this.state.calorieSensor.getCurrent === 'function') {
+        cal = this.state.calorieSensor.getCurrent()
+      } else if (typeof this.state.calorieSensor.current === 'number') {
+        cal = this.state.calorieSensor.current
+      }
+
+      let target = 600
+      if (typeof this.state.calorieSensor.getTarget === 'function') {
+        target = this.state.calorieSensor.getTarget()
+      } else if (typeof this.state.calorieSensor.target === 'number') {
+        target = this.state.calorieSensor.target
+      }
+      if (!target || target <= 0) target = 600
+
+      if (force || cal !== this.state.lastCalorieVal) {
+        this.state.lastCalorieVal = cal
+        this.state.calorieWidget.setProperty(prop.TEXT, `🔥 ${formatNumber(cal)} KCAL`)
+        if (this.state.calorieArc) {
+          const pct = Math.min(100, Math.max(0, (cal / target) * 100))
+          const angleSpan = (pct / 100) * 90
+          const endAngle = 45 + angleSpan
+          this.state.calorieArc.setProperty(prop.MORE, {
+            start_angle: 45,
+            end_angle: Math.min(135, endAngle)
+          })
+        }
       }
     } catch (e) {
       console.log('Error updating calories:', e)
@@ -779,5 +904,6 @@ WatchFace({
       stopTimer(this.state.timerId)
       this.state.timerId = null
     }
+    this.unregisterSensorListeners()
   }
 })
