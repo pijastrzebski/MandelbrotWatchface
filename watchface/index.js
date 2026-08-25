@@ -563,7 +563,7 @@ WatchFace({
       text: '100%'
     })
     const onBatteryClick = () => {
-      openSystemApp(typeof SYSTEM_APP_SETTING !== 'undefined' ? SYSTEM_APP_SETTING : 1, null, 'Settings_battery')
+      openSystemApp(SYSTEM_APP_SETTING)
     }
     batteryHeader.addEventListener(event.CLICK_DOWN, onBatteryClick)
     this.state.batteryWidget.addEventListener(event.CLICK_DOWN, onBatteryClick)
