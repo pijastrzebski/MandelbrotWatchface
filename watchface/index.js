@@ -89,14 +89,14 @@ const MAX_R_SQ = 236 * 236 // Circular screen boundary radius
 
 // Iconic Mandelbrot Zoom Destinations (cycles each minute)
 const ZOOM_TARGETS = [
-  { name: 'Electric Cardioid', cr: -0.65, ci: 0.0, minSpan: 0.015, maxSpan: 1.30 },
-  { name: 'Seahorse Valley', cr: -0.743643887, ci: 0.1318259042, minSpan: 0.008, maxSpan: 1.30 },
-  { name: 'Triple Spiral', cr: -0.16070135, ci: 1.0375665, minSpan: 0.010, maxSpan: 1.30 },
-  { name: 'Elephant Valley', cr: 0.27415, ci: 0.48235, minSpan: 0.012, maxSpan: 1.30 },
-  { name: 'Mini-Brot Satellite', cr: -1.74975, ci: 0.00015, minSpan: 0.006, maxSpan: 1.30 },
-  { name: 'Starfish Galaxy', cr: -0.776592847, ci: 0.136640848, minSpan: 0.008, maxSpan: 1.30 },
-  { name: 'Feather Valley', cr: -0.7995, ci: 0.1562, minSpan: 0.010, maxSpan: 1.30 },
-  { name: 'Golden Spiral', cr: -0.7492, ci: 0.1102, minSpan: 0.009, maxSpan: 1.30 }
+  { name: 'Mini-Brot Satellite', cr: -1.74975, ci: 0.00015, minSpan: 0.006, maxSpan: 1.30, paletteIdx: 4 },
+  { name: 'Electric Cardioid', cr: -0.65, ci: 0.0, minSpan: 0.015, maxSpan: 1.30, paletteIdx: 0 },
+  { name: 'Seahorse Valley', cr: -0.743643887, ci: 0.1318259042, minSpan: 0.008, maxSpan: 1.30, paletteIdx: 1 },
+  { name: 'Triple Spiral', cr: -0.16070135, ci: 1.0375665, minSpan: 0.010, maxSpan: 1.30, paletteIdx: 2 },
+  { name: 'Elephant Valley', cr: 0.27415, ci: 0.48235, minSpan: 0.012, maxSpan: 1.30, paletteIdx: 3 },
+  { name: 'Starfish Galaxy', cr: -0.776592847, ci: 0.136640848, minSpan: 0.008, maxSpan: 1.30, paletteIdx: 0 },
+  { name: 'Feather Valley', cr: -0.7995, ci: 0.1562, minSpan: 0.010, maxSpan: 1.30, paletteIdx: 1 },
+  { name: 'Golden Spiral', cr: -0.7492, ci: 0.1102, minSpan: 0.009, maxSpan: 1.30, paletteIdx: 3 }
 ]
 
 // Glowing Electric Color Engine
@@ -160,6 +160,7 @@ WatchFace({
     isAOD: false,
     timerId: null,
     lastRenderedSecond: -1,
+    startMinute: null,
     batterySensor: null,
     stepSensor: null,
     heartRateSensor: null,
@@ -226,6 +227,7 @@ WatchFace({
       this.startClockTimer()
 
       const now = new Date()
+      this.state.startMinute = now.getMinutes()
       this.renderMandelbrotZoom(now.getSeconds(), now.getMinutes(), true)
     }
   },
@@ -460,9 +462,9 @@ WatchFace({
     // Left Column: STEPS
     const stepHeader = createWidget(widget.TEXT, {
       x: px(35),
-      y: px(254),
+      y: px(260),
       w: px(120),
-      h: px(26),
+      h: px(46),
       color: 0x38BDF8,
       text_size: px(16),
       font: FONT_BOLD,
@@ -472,7 +474,7 @@ WatchFace({
     })
     this.state.stepWidget = createWidget(widget.TEXT, {
       x: px(35),
-      y: px(282),
+      y: px(304),
       w: px(120),
       h: px(38),
       color: 0xFFFFFF,
@@ -491,18 +493,18 @@ WatchFace({
     // Vertical Divider 1
     createWidget(widget.FILL_RECT, {
       x: px(160),
-      y: px(258),
+      y: px(272),
       w: px(1),
-      h: px(54),
+      h: px(64),
       color: 0x334155
     })
 
     // Middle Column: HEART RATE
     const hrHeader = createWidget(widget.TEXT, {
       x: px(170),
-      y: px(254),
+      y: px(260),
       w: px(140),
-      h: px(26),
+      h: px(46),
       color: 0xFB7185,
       text_size: px(16),
       font: FONT_BOLD,
@@ -512,7 +514,7 @@ WatchFace({
     })
     this.state.heartRateWidget = createWidget(widget.TEXT, {
       x: px(170),
-      y: px(282),
+      y: px(304),
       w: px(140),
       h: px(38),
       color: 0xFFFFFF,
@@ -531,18 +533,18 @@ WatchFace({
     // Vertical Divider 2
     createWidget(widget.FILL_RECT, {
       x: px(319),
-      y: px(258),
+      y: px(272),
       w: px(1),
-      h: px(54),
+      h: px(64),
       color: 0x334155
     })
 
     // Right Column: BATTERY / POWER
     const batteryHeader = createWidget(widget.TEXT, {
       x: px(325),
-      y: px(254),
+      y: px(260),
       w: px(120),
-      h: px(26),
+      h: px(46),
       color: 0x34D399,
       text_size: px(16),
       font: FONT_BOLD,
@@ -552,7 +554,7 @@ WatchFace({
     })
     this.state.batteryWidget = createWidget(widget.TEXT, {
       x: px(325),
-      y: px(282),
+      y: px(304),
       w: px(120),
       h: px(38),
       color: 0xFFFFFF,
@@ -571,9 +573,9 @@ WatchFace({
     // 6. Bottom Row: CALORIES
     this.state.calorieWidget = createWidget(widget.TEXT, {
       x: px(40),
-      y: px(348),
+      y: px(366),
       w: px(400),
-      h: px(36),
+      h: px(44),
       color: 0xFBBF24,
       text_size: px(23),
       font: FONT_BOLD,
@@ -607,9 +609,13 @@ WatchFace({
 
     this.state.lastRenderedSecond = second
 
-    const targetIdx = minute % ZOOM_TARGETS.length
+    let minuteDelta = 0
+    if (this.state.startMinute !== null) {
+      minuteDelta = (minute - this.state.startMinute + 60) % 60
+    }
+    const targetIdx = minuteDelta % ZOOM_TARGETS.length
     const target = ZOOM_TARGETS[targetIdx]
-    const paletteIdx = targetIdx
+    const paletteIdx = typeof target.paletteIdx === 'number' ? target.paletteIdx : targetIdx
 
     // Smooth sinusoidal zoom dive (0..30 dives in, 30..59 pulls back out)
     const progress = (1 - Math.cos((second / 60) * 2 * Math.PI)) / 2
