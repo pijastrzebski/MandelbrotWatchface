@@ -159,8 +159,8 @@ WatchFace({
   state: {
     isAOD: false,
     timerId: null,
-    lastRenderedSecond: -1,
-    startMinute: null,
+    lastRenderedTick: -1,
+    animTicks: 9,
     batterySensor: null,
     stepSensor: null,
     heartRateSensor: null,
@@ -226,9 +226,9 @@ WatchFace({
       this.initView()
       this.startClockTimer()
 
-      const now = new Date()
-      this.state.startMinute = now.getMinutes()
-      this.renderMandelbrotZoom(now.getSeconds(), now.getMinutes(), true)
+      const animSec = this.state.animTicks % 60
+      const targetIdx = Math.floor(this.state.animTicks / 60) % ZOOM_TARGETS.length
+      this.renderMandelbrotZoom(animSec, targetIdx, true)
     }
   },
 
@@ -599,23 +599,18 @@ WatchFace({
 
   /**
    * Continuous-Potential progressive Mandelbrot zoom engine
-   * @param {number} second - Current second (0..59)
-   * @param {number} minute - Current minute
+   * @param {number} second - Current animation second (0..59)
+   * @param {number} targetIdx - Landmark target index
    * @param {boolean} force - Force redraw
    */
-  renderMandelbrotZoom(second, minute, force = false) {
+  renderMandelbrotZoom(second, targetIdx = 0, force = false) {
     if (!this.state.bgCanvas || this.state.isAOD) return
-    if (!force && second === this.state.lastRenderedSecond) return
+    if (!force && this.state.animTicks === this.state.lastRenderedTick) return
 
-    this.state.lastRenderedSecond = second
+    this.state.lastRenderedTick = this.state.animTicks
 
-    let minuteDelta = 0
-    if (this.state.startMinute !== null) {
-      minuteDelta = (minute - this.state.startMinute + 60) % 60
-    }
-    const targetIdx = minuteDelta % ZOOM_TARGETS.length
-    const target = ZOOM_TARGETS[targetIdx]
-    const paletteIdx = typeof target.paletteIdx === 'number' ? target.paletteIdx : targetIdx
+    const target = ZOOM_TARGETS[targetIdx % ZOOM_TARGETS.length]
+    const paletteIdx = typeof target.paletteIdx === 'number' ? target.paletteIdx : (targetIdx % ZOOM_TARGETS.length)
 
     // Smooth sinusoidal zoom dive (0..30 dives in, 30..59 pulls back out)
     const progress = (1 - Math.cos((second / 60) * 2 * Math.PI)) / 2
@@ -797,10 +792,11 @@ WatchFace({
     const secondVal = now.getSeconds()
     const minuteVal = now.getMinutes()
 
-    // Continuously zoom into the Mandelbrot set every second
-    if (secondVal !== this.state.lastRenderedSecond) {
-      this.renderMandelbrotZoom(secondVal, minuteVal)
-    }
+    // Continuously zoom into the Mandelbrot set every second starting from constant state
+    this.state.animTicks = (this.state.animTicks + 1) % (ZOOM_TARGETS.length * 60 * 1000)
+    const animSec = this.state.animTicks % 60
+    const targetIdx = Math.floor(this.state.animTicks / 60) % ZOOM_TARGETS.length
+    this.renderMandelbrotZoom(animSec, targetIdx)
 
     let rawHours = now.getHours()
     const is24H = this.state.timeSensor && typeof this.state.timeSensor.is24Hour === 'boolean' ? this.state.timeSensor.is24Hour : true
